@@ -2,40 +2,101 @@
 
 op=1
 
-automatizar() {
+crear_2() {
 
-if [ $(ls /mnt/usuarios) ]; then
 
- for i in $(ls /mnt/usuarios); do
+ if [ "$#" -ne 2 ]; then
+
+    sudo touch fichero_vacio.txt
+    sudo truncate -s 1024KB fichero_vacio.txt
+  elif [ -z $1 ]; then
   
-  sudo useradd -m -s /bin/bash $i
+  sudo touch fichero_vacio.txt
+  sudo truncate -s $2KB fichero_vacio.txt
 
-  for z in $(cat $i); do
+  elif [ -z $2 ]; then
 
-  sudo mkdir /home/$i/$z
+     sudo touch $1
+     sudo truncate -s 1024KB $1
 
- done
 
- sudo passwd $i
+  elif ! [[ $2 =~ ^[0-9] ]]; then
 
- sudo rm /mnt/usuarios/$i
+  echo "No es correcto especificar algo que no sea un número como parámetro."
+  
+  else
 
-done
+  sudo touch $1
+  sudo truncate -s $2KB $1  
 
-else
-
-echo "El directorio esta vacío"
 
 fi
 
+}
+
+crear() {
 
 
+ if [ "$#" -ne 2 ]; then
 
+    sudo touch fichero_vacio.txt
+    sudo truncate -s 1024KB fichero_vacio.txt
+  elif [ -z $1 ]; then
+  
+  sudo touch fichero_vacio.txt
+  sudo truncate -s $2KB fichero_vacio.txt
+
+  elif [ -z $2 ]; then
+
+     sudo touch $1
+     sudo truncate -s 1024KB $1
+
+
+  elif ! [[ $2 =~ ^[0-9] ]]; then
+
+  echo "No es correcto especificar algo que no sea un número como parámetro."
+  
+  else
+
+  sudo touch $1
+  sudo truncate -s $2KB $1  
+
+
+fi
+
+}
+
+
+automatizar() {
+
+ if [ $(ls /mnt/usuarios) ]; then
+
+    for i in $(ls /mnt/usuarios); do
+  
+      sudo useradd -m -s /bin/bash $i
+
+      for z in $(cat $i); do
+
+        sudo mkdir /home/$i/$z
+
+      done
+
+      sudo passwd $i
+
+      sudo rm /mnt/usuarios/$i
+
+    done
+
+ else
+
+    echo "El directorio esta vacío"
+
+ fi
 
 }
 
 romanos() {
-read -p "Introduce un número: " numero
+    local numero="$1"
     local romano=""
  if [ $numero -gt 200 || $numero -lt 1 ]; then
 
@@ -48,21 +109,20 @@ read -p "Introduce un número: " numero
     for (( i=0; i<${#valores[@]}; i++ )); do
         while (( numero >= valores[i] )); do
             romano+="${simbolos[i]}"
- echo "$romano"
+
 
             (( numero -= valores[i] ))
         done
     done
 
     echo "$romano"
-fi
+ fi
 }
 
 permisosoctal() {
  
- read -p "Introduzca un nombre de fichero o directorio: " fchd
 
- ruta=$(find / -name $fchd 2> /dev/null)
+ ruta=$(find / -name $1 2> /dev/null)
 
  echo "Los permisos del fichero en octal son: " $(stat --format=%a $ruta)
 
@@ -89,9 +149,8 @@ privilegios() {
 
 contar() {
 
-  read -p "Introduzca un nombre de directorio: " d
 
-  ruta=$(sudo find / -type d -name $d 2> /dev/null)
+  ruta=$(sudo find / -type d -name $1 2> /dev/null)
 
   echo "Número de ficheros de $d: " $(ls -l $ruta | grep -o '^-' | wc -l)  
 
@@ -120,59 +179,38 @@ buscar() {
 
 fichero() {
 
-read -p "Introduzca un nombre de fichero: " f
-
-ruta=$((sudo find / -type f -name $f)2>/dev/null | grep $f -w)
+ ruta=$((sudo find / -type f -name $1)2>/dev/null | grep $1 -w)
 
 
+ echo "Tipo de fichero: " $(stat $ruta --format=%F)
 
-echo "********"
-echo "* TIPO *"
-echo "********"
+ echo "Tamaño en bytes: " $(stat $ruta --format=%s)
 
-echo "$(stat $ruta --format=%F)"
+ echo "Inodo: " $(stat $ruta --format=%i)
 
-echo "*******************"
-echo "* TAMAÑO EN BYTES *"
-echo "*******************"
-
-echo "$(stat $ruta --format=%s)"
-
-echo "*********"
-echo "* INODO *"
-echo "*********"
-
-echo "$(stat $ruta --format=%i)"
-
-echo "********************"
-echo "* Punto de montaje *"
-echo "********************"
-
-echo "$(stat $ruta --format=%m)"
+ echo "Punto de montaje: " $(stat $ruta --format=%m)
 
 }
 
 edad() {
 
- read -p "Introduce tu edad: " edad
-
- if [ $edad -lt 3 ]; then
+ if [ $1 -lt 3 ]; then
 
    echo "Niñez"
 
- elif [[ $edad -le 10 && $edad -ge 3 ]]; then
+ elif [[ $1 -le 10 && $1 -ge 3 ]]; then
 
    echo "Infancia"
 
- elif [[ $edad -lt 18 && $edad -gt 10 ]]; then
+ elif [[ $1 -lt 18 && $1 -gt 10 ]]; then
 
    echo "Adolescencia"
 
- elif [[ $edad -lt 40 && $edad -ge 18 ]]; then 
+ elif [[ $1 -lt 40 && $1 -ge 18 ]]; then 
 
    echo "Juventud"
 
- elif [[ $edad -le 65 && $edad -ge 40 ]]; then
+ elif [[ $1 -le 65 && $1 -ge 40 ]]; then
 
    echo "Madurez"
 
@@ -280,9 +318,14 @@ fi
 
 bisiesto() {
  let h=$year%400
- if [ $h -eq 0 ]; then
+ let i=$year%100
+ if [[ $year%4 -eq 0 && $year%100 -ne 0 ]]; then
 
   echo "El año $year es bisiesto" 
+ 
+ elif [[ $year%400 -eq 0 && $year%100 -eq 0 ]]; then
+
+   echo "El año $year es bisiesto" 
 
  else
 
@@ -327,6 +370,7 @@ while [ $op -ne 0 ];
    echo "Opción 10: permisosoctal"
    echo "Opción 11: romanos"
    echo "Opción 12: automatizar"
+   echo "Opción 13: crear"
    echo "Opción 0: Salir"
    read -p "Elegir la opcion deseada " op
    echo ""
@@ -339,7 +383,7 @@ while [ $op -ne 0 ];
     ;;
 
     1)
-     echo "Enter the number:"   
+     echo "Introduce un número: "   
      read num
 
 
@@ -354,7 +398,7 @@ while [ $op -ne 0 ];
     ;;
 
     2)
-     read year
+     read -p "Introduce un año: " year
      bisiesto $year
     ;;
 
@@ -369,11 +413,16 @@ while [ $op -ne 0 ];
  ;;
 
  5)
-  edad
+   read -p "Introduce tu edad: " edad
+
+
+   edad $edad
  ;;
 
  6)
- fichero
+ read -p "Introduzca un nombre de fichero: " f 
+
+ fichero $f
  ;;
 
  7)
@@ -385,16 +434,23 @@ while [ $op -ne 0 ];
  ;;
 
  9)
- privilegios
+   read -p "Introduzca un nombre de directorio: " d
+
+
+   privilegios $d
  ;;
 
  10)
- permisosoctal
+  read -p "Introduzca un nombre de fichero o directorio: " fchd
+
+ permisosoctal $fchd
 
  ;;
 
  11)
- romanos
+read -p "Introduce un número: " numero
+
+ romanos $numero
  ;;
 
  12)
@@ -402,7 +458,9 @@ while [ $op -ne 0 ];
  ;;
 
  13)
-
+ read -p "Introduce un nombre de fichero: " fic
+ read -p "Introduce un tamaño para el fichero: " tam
+ crear $fic $tam
  ;;
 
  14)
